@@ -7,88 +7,78 @@ const grid = document.querySelector(".feature-grid");
 const latest = document.getElementById("latest");
 
 function closeMenu() {
-  if (nav && menu) {
-    nav.classList.remove("active");
-    menu.setAttribute("aria-expanded", "false");
-    menu.textContent = "☰";
-  }
+  if (!menu || !nav) return;
+
+  nav.classList.remove("active");
+  menu.setAttribute("aria-expanded", "false");
+  menu.textContent = "☰";
 }
 
-// Mobile navigation
+// Mobile menu
 if (menu && nav) {
   menu.addEventListener("click", () => {
     const isOpen = nav.classList.toggle("active");
-
-    menu.setAttribute("aria-expanded", isOpen);
+    menu.setAttribute("aria-expanded", String(isOpen));
     menu.textContent = isOpen ? "✕" : "☰";
   });
 
-  document.addEventListener("click", (event) => {
-    if (!nav.contains(event.target) && !menu.contains(event.target)) {
-      closeMenu();
+  nav.addEventListener("click", (event) => {
+    const link = event.target.closest("a");
+    if (!link) return;
+
+    const categories = {
+      "#latest": "all",
+      "#technology": "technology",
+      "#science": "science",
+      "#money": "money",
+      "#world": "world",
+      "#mysteries": "mysteries"
+    };
+
+    const category = categories[link.getAttribute("href")];
+
+    if (category) {
+      event.preventDefault();
+      filterArticles(category);
     }
+
+    closeMenu();
   });
 }
 
-// Article filtering
+// Filter articles
 function filterArticles(category) {
   let visibleCount = 0;
 
   cards.forEach((card) => {
-    const matches =
+    const show =
       category === "all" ||
       card.dataset.category === category;
 
-    card.style.display = matches ? "" : "none";
+    card.style.display = show ? "" : "none";
 
-    if (matches) visibleCount++;
+    if (show) visibleCount++;
   });
 
-  let emptyMessage = document.getElementById("empty-message");
+  let message = document.getElementById("empty-message");
 
-  if (!emptyMessage && grid) {
-    emptyMessage = document.createElement("p");
-    emptyMessage.id = "empty-message";
-    emptyMessage.textContent = "New stories in this category are coming soon.";
-    emptyMessage.style.color = "#9ba4b5";
-    emptyMessage.style.padding = "25px 0";
-    grid.appendChild(emptyMessage);
+  if (!message && grid) {
+    message = document.createElement("p");
+    message.id = "empty-message";
+    message.textContent =
+      "New stories in this category are coming soon.";
+    message.style.color = "#9ba4b5";
+    message.style.padding = "25px 0";
+    grid.appendChild(message);
   }
 
-  if (emptyMessage) {
-    emptyMessage.style.display = visibleCount === 0 ? "block" : "none";
+  if (message) {
+    message.style.display = visibleCount === 0 ? "block" : "none";
   }
-
-  closeMenu();
 
   if (latest) {
     latest.scrollIntoView({ behavior: "smooth" });
   }
-}
-
-// Main navigation
-if (nav) {
-  nav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", (event) => {
-      const name = link.textContent.trim().toLowerCase();
-
-      const categories = {
-        "latest": "all",
-        "technology": "technology",
-        "science": "science",
-        "money": "money",
-        "world": "world",
-        "mysteries": "mysteries"
-      };
-
-      if (categories[name]) {
-        event.preventDefault();
-        filterArticles(categories[name]);
-      }
-
-      closeMenu();
-    });
-  });
 }
 
 // Category tiles
@@ -96,7 +86,8 @@ document.querySelectorAll(".category-tile").forEach((tile) => {
   tile.addEventListener("click", (event) => {
     event.preventDefault();
 
-    const name = tile.querySelector("b")?.textContent.trim().toLowerCase();
+    const name = tile.querySelector("b")
+      ?.textContent.trim().toLowerCase();
 
     const categories = {
       "technology": "technology",
